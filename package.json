@@ -1,0 +1,29 @@
+{
+  "name": "true-story-bro",
+  "version": "0.0.1",
+  "description": "Scan ethereum's contract activity",
+  "author": "Igor Konovalov",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ikonovalov/true-story-bro.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js --help"
+  },
+  "bin": {
+    "tsbro": "./bin/tsbro"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cli-table": "^0.3.1",
+    "colors": "^1.1.2",
+    "command-line-args": "^3.0.4",
+    "command-line-usage": "^3.0.8",
+    "ethereumjs-tx": "1.1.4",
+    "ethereumjs-util": "4.5.0",
+    "streamifier": "0.1.1",
+    "web3": "0.18.4"
+  }
+}
