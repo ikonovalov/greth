@@ -105,16 +105,17 @@ eth.getBlockNumber((error, blockNumber) => {
 
     let anchorBlockNumber = options.anchor || blockNumber;
     let blockOffset = options.offset;
-    let currentBlockNum = anchorBlockNumber - blockOffset;
-    console.log(`Last block ${anchorBlockNumber}. Diving to ${currentBlockNum}.`);
+    let deepBlock = anchorBlockNumber - blockOffset;
+    console.log(`Last block ${anchorBlockNumber}. Diving to ${deepBlock}.`);
 
-// iterate on blocks
+    // iterate on blocks
     let explore = function (blockNumber) {
-        if (blockNumber % 100 === 0) {
-            console.log(`Passing ${blockNumber}'s block...`);
-        }
         eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
-            if (!error && txCount > 0) {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            if (txCount > 0) {
                 eth.getBlock(blockNumber, true, (error, block) => {
                     let transactions = block.transactions;
                     for (let i = 0; i < transactions.length; i++) {
@@ -125,13 +126,16 @@ eth.getBlockNumber((error, blockNumber) => {
                         }
                     }
                 });
-
+            }
+            if (blockNumber == anchorBlockNumber) {
+                console.log("Done")
+            } else {
+                setTimeout(explore, 0, blockNumber + 1)
             }
         });
     };
-    while (anchorBlockNumber !== ++currentBlockNum) {
-        explore(currentBlockNum)
-    }
+
+    explore(deepBlock);
 });
 
 
