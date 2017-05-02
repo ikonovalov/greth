@@ -36,14 +36,14 @@ const address = options.addr;
 const gethUrl = options.geth;
 
 // upload contract abi
-let abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
+const abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
 const SolidityFunction = require('web3/lib/web3/function');
 const SolidityCoder = require('web3/lib/solidity/coder');
 
 // initialize web3
 //web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
 web3.setProvider(new Web3.providers.IpcProvider('/mnt/u110/ethereum/pnet1/geth.ipc', require('net')));
-let eth = web3.eth;
+const eth = web3.eth;
 
 // prepare functions
 let functions = abi
@@ -108,7 +108,17 @@ eth.getBlockNumber((error, blockNumber) => {
     let deepBlock = anchorBlockNumber - blockOffset;
     console.log(`Last block ${anchorBlockNumber}. Diving to ${deepBlock}.`);
 
-    // iterate on blocks
+    let processBlock = function (block) {
+        let transactions = block.transactions;
+        for (let i = 0; i < transactions.length; i++) {
+            let tx = transactions[i];
+            if (tx.to === address) {
+                let decodedInput = decodeTxInput(tx);
+                outputFunction(decodedInput);
+            }
+        }
+    };
+
     let explore = function (blockNumber) {
         eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
             if (error) {
@@ -117,13 +127,10 @@ eth.getBlockNumber((error, blockNumber) => {
             }
             if (txCount > 0) {
                 eth.getBlock(blockNumber, true, (error, block) => {
-                    let transactions = block.transactions;
-                    for (let i = 0; i < transactions.length; i++) {
-                        let tx = transactions[i];
-                        if (tx.to === address) {
-                            let decodedInput = decodeTxInput(tx);
-                            outputFunction(decodedInput);
-                        }
+                    if (!error) {
+                        processBlock(block);
+                    } else {
+                        console.error(error)
                     }
                 });
             }
@@ -135,6 +142,7 @@ eth.getBlockNumber((error, blockNumber) => {
         });
     };
 
+    // iterate on blocks
     explore(deepBlock);
 });
 
