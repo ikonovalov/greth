@@ -10,17 +10,17 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js --help"
+    "start": "node bin/bro --help"
   },
   "bin": {
-    "tsbro": "./bin/tsbro"
+    "bro": "./bin/bro"
   },
   "license": "Apache-2.0",
   "dependencies": {
     "cli-table": "^0.3.1",
     "colors": "^1.1.2",
-    "command-line-args": "^3.0.4",
-    "command-line-usage": "^3.0.8",
+    "command-line-args": "^4.0.3",
+    "command-line-usage": "^4.0.0",
     "ethereumjs-tx": "1.1.4",
     "ethereumjs-util": "4.5.0",
     "streamifier": "0.1.1",

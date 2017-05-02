@@ -27,9 +27,8 @@ const optionDefinitions = [
     {name: 'addr', type: String, alias: 'a'},
     {name: 'abi', type: String, alias: 'i'},
     {name: 'geth', type: String, defaultValue: 'http://localhost:8545', alias: 'g'},
-    {name: 'offset', type: Number, defaultValue: 50, alias: 's'},
-    {name: 'scan-to', type: Number, defaultValue: Infinity, alias: 'e'},
-    {name: 'fail-fast', type: Boolean, defaultValue: false},
+    {name: 'anchor', type: Number},
+    {name: 'offset', type: Number, defaultValue: 100},
     {name: 'help', alias: 'h', type: Boolean}
 ];
 const options = commandLineArgs(optionDefinitions);
@@ -39,11 +38,13 @@ const gethUrl = options.geth;
 // upload contract abi
 let abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
 const SolidityFunction = require('web3/lib/web3/function');
+const SolidityCoder = require('web3/lib/solidity/coder');
 
 // initialize web3
 web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
 let eth = web3.eth;
 console.log(`Connected to ${web3.version.node}`);
+
 // prepare functions
 let functions = abi
     .filter(e => e.type == 'function')
@@ -58,7 +59,63 @@ let funcTable = new Table({
         compact: true
     }
 });
-functions.forEach(solf => funcTable.push([solf.displayName(), solf.signature()]));
+
+let funcMap = new Map();
+functions.forEach(sfunc => {
+    funcTable.push([sfunc.displayName(), sfunc.signature()]);
+    funcMap.set(sfunc.signature(), sfunc);
+});
 
 console.log(funcTable.toString());
+
+// scan transactions
+let anchorBlockNumber = options.anchor || eth.blockNumber;
+let blockOffset = options.offset;
+let currentBlockNum = anchorBlockNumber - blockOffset;
+console.log(`Last block ${anchorBlockNumber}. Diving to ${currentBlockNum}.`);
+
+let decodeTxInput = function (tx) {
+    let inputData = tx.input;
+    let inputSignature = inputData.substr(2, 8);
+    let calledFunction = funcMap.get(inputSignature);
+    let inputEncodedParams = inputData.slice(10);
+    let inputDecodedParams = SolidityCoder.decodeParams(calledFunction._inputTypes, inputEncodedParams);
+    return {
+        tx: tx,
+        func: calledFunction,
+        signature: inputSignature,
+        params: inputDecodedParams
+    };
+};
+let consolePrint = function (decoded) {
+    console.log(`Block: ${decoded.tx.blockNumber}`)
+    console.log(`   Tx: ${decoded.tx.hash}`)
+    console.log(`   Function: ${decoded.func.displayName()}`)
+    console.log(`   Params [${decoded.func.typeName()}] {` );
+    decoded.params.forEach(p => {
+        console.log(`       ${p}`);
+    });
+    console.log(`   }`);
+};
+
+let outputFunction = consolePrint;
+
+while (anchorBlockNumber !== ++currentBlockNum) {
+    if (currentBlockNum % 100 === 0) {
+        console.log(`Passing ${currentBlockNum}'s block...`);
+    }
+    let hasTx = eth.getBlockTransactionCount(currentBlockNum) > 0;
+    if (hasTx) {
+        let block = eth.getBlock(currentBlockNum, true);
+        let transactions = block.transactions;
+        for (let i = 0; i < transactions.length; i++) {
+            let tx = transactions[i];
+            if (tx.to === address) {
+                let decodedInput = decodeTxInput(tx);
+                outputFunction(decodedInput);
+            }
+        }
+    }
+}
+
 
