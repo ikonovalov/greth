@@ -41,9 +41,9 @@ const SolidityFunction = require('web3/lib/web3/function');
 const SolidityCoder = require('web3/lib/solidity/coder');
 
 // initialize web3
-web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
+//web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
+web3.setProvider(new Web3.providers.IpcProvider('/mnt/u110/ethereum/pnet1/geth.ipc', require('net')));
 let eth = web3.eth;
-console.log(`Connected to ${web3.version.node}`);
 
 // prepare functions
 let functions = abi
@@ -68,12 +68,7 @@ functions.forEach(sfunc => {
 
 console.log(funcTable.toString());
 
-// scan transactions
-let anchorBlockNumber = options.anchor || eth.blockNumber;
-let blockOffset = options.offset;
-let currentBlockNum = anchorBlockNumber - blockOffset;
-console.log(`Last block ${anchorBlockNumber}. Diving to ${currentBlockNum}.`);
-
+// functions
 let decodeTxInput = function (tx) {
     let inputData = tx.input;
     let inputSignature = inputData.substr(2, 8);
@@ -87,11 +82,12 @@ let decodeTxInput = function (tx) {
         params: inputDecodedParams
     };
 };
+
 let consolePrint = function (decoded) {
     console.log(`Block: ${decoded.tx.blockNumber}`)
     console.log(`   Tx: ${decoded.tx.hash}`)
     console.log(`   Function: ${decoded.func.displayName()}`)
-    console.log(`   Params [${decoded.func.typeName()}] {` );
+    console.log(`   Params [${decoded.func.typeName()}] {`);
     decoded.params.forEach(p => {
         console.log(`       ${p}`);
     });
@@ -100,22 +96,42 @@ let consolePrint = function (decoded) {
 
 let outputFunction = consolePrint;
 
-while (anchorBlockNumber !== ++currentBlockNum) {
-    if (currentBlockNum % 100 === 0) {
-        console.log(`Passing ${currentBlockNum}'s block...`);
+// prepare scan transactions
+eth.getBlockNumber((error, blockNumber) => {
+    if (error) {
+        console.error(error);
+        return;
     }
-    let hasTx = eth.getBlockTransactionCount(currentBlockNum) > 0;
-    if (hasTx) {
-        let block = eth.getBlock(currentBlockNum, true);
-        let transactions = block.transactions;
-        for (let i = 0; i < transactions.length; i++) {
-            let tx = transactions[i];
-            if (tx.to === address) {
-                let decodedInput = decodeTxInput(tx);
-                outputFunction(decodedInput);
-            }
+
+    let anchorBlockNumber = options.anchor || blockNumber;
+    let blockOffset = options.offset;
+    let currentBlockNum = anchorBlockNumber - blockOffset;
+    console.log(`Last block ${anchorBlockNumber}. Diving to ${currentBlockNum}.`);
+
+// iterate on blocks
+    let explore = function (blockNumber) {
+        if (blockNumber % 100 === 0) {
+            console.log(`Passing ${blockNumber}'s block...`);
         }
+        eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
+            if (!error && txCount > 0) {
+                eth.getBlock(blockNumber, true, (error, block) => {
+                    let transactions = block.transactions;
+                    for (let i = 0; i < transactions.length; i++) {
+                        let tx = transactions[i];
+                        if (tx.to === address) {
+                            let decodedInput = decodeTxInput(tx);
+                            outputFunction(decodedInput);
+                        }
+                    }
+                });
+
+            }
+        });
+    };
+    while (anchorBlockNumber !== ++currentBlockNum) {
+        explore(currentBlockNum)
     }
-}
+});
 
 
