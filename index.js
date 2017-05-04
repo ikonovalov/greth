@@ -22,6 +22,7 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const commandLineArgs = require('command-line-args');
 const getUsage = require('command-line-usage');
+const BigNumber = require('bignumber.js');
 
 const optionDefinitions = [
     {name: 'addr', type: String, alias: 'a'},
@@ -91,14 +92,30 @@ let finalize = function () {
     process.exit();
 };
 
+let toStr = function (value) {
+    if (value.constructor === String)
+        return value;
+    if (value.constructor === BigNumber)
+        return `0x${value.toString(16)}`;
+    else
+        return value.toString();
+
+};
+
 let consolePrint = function (decoded) {
     console.log(`Block: ${decoded.tx.blockNumber}`);
     console.log(`   Tx: ${decoded.tx.hash}`);
     console.log(`   From: ${decoded.tx.from}`);
     console.log(`   Function: ${decoded.func.displayName()}`);
     console.log(`   Params [${decoded.func.typeName()}] {`);
-    decoded.params.forEach(p => {
-        console.log(`       ${p.toString(16)}`);
+    let params = decoded.params;
+    params.forEach((p, idx) => {
+        if (Array.isArray(p)) { // like uint256[]
+            let reduced = p.reduce((prev, curr) => toStr(prev) + ", " + toStr(curr));
+            console.log(`       #${idx}: [${reduced}]`);
+        }
+        else
+            console.log(`       #${idx}: ${toStr(p)}`);
     });
     console.log(`   }`);
 };
