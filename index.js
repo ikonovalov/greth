@@ -24,15 +24,32 @@ const commandLineArgs = require('command-line-args');
 const getUsage = require('command-line-usage');
 const BigNumber = require('bignumber.js');
 
-const optionDefinitions = [
-    {name: 'addr', type: String, alias: 'a'},
-    {name: 'abi', type: String, alias: 'i'},
-    {name: 'geth', type: String, defaultValue: 'http://localhost:8545', alias: 'g'},
-    {name: 'anchor', type: Number},
-    {name: 'offset', type: Number, defaultValue: 2000},
-    {name: 'help', alias: 'h', type: Boolean}
-];
+const optionDefinitions = require('./src/cli-options');
 const options = commandLineArgs(optionDefinitions);
+
+if(options.version) {
+    console.log(require('./package.json').version);
+    process.exit(0);
+}
+
+if (options.help) {
+    console.log(getUsage([
+        {
+            content: require('./src/ansi-header'),
+            raw: true
+        },
+        {
+            header: 'Description',
+            content: "Scan Ethereum network and outputs smart contract's related transactions."
+        },
+        {
+            header: 'Options',
+            optionList: optionDefinitions
+        }
+    ]));
+    process.exit(0);
+}
+
 const address = options.addr;
 const gethUrl = options.geth;
 
@@ -42,8 +59,12 @@ const SolidityFunction = require('web3/lib/web3/function');
 const SolidityCoder = require('web3/lib/solidity/coder');
 
 // initialize web3
-//web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
-web3.setProvider(new Web3.providers.IpcProvider('/mnt/u110/ethereum/pnet1/geth.ipc', require('net')));
+if (gethUrl.startsWith('http')) {
+    web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
+} else {
+    // for instance: /mnt/u110/ethereum/pnet1/geth.ipc
+    web3.setProvider(new Web3.providers.IpcProvider(gethUrl, require('net')));
+}
 const eth = web3.eth;
 
 // prepare functions
@@ -88,7 +109,7 @@ let decodeTxInput = function (tx) {
 };
 
 let finalize = function () {
-    console.log("\u262D Done.".bold.green);
+    console.log("\nDone \u262D".bold.green);
     process.exit();
 };
 
@@ -102,8 +123,17 @@ let toStr = function (value) {
 
 };
 
+/*
+ * @param decoded => {
+ *       tx: tx,
+ *       func: calledFunction,
+ *       signature: inputSignature,
+ *       params: inputDecodedParams
+ *   }
+ */
 let consolePrint = function (decoded) {
-    console.log(`Block: ${decoded.tx.blockNumber}`);
+    console.log();
+    console.log(`Block: ${decoded.tx.blockNumber}`.bold);
     console.log(`   Tx: ${decoded.tx.hash}`);
     console.log(`   From: ${decoded.tx.from}`);
     console.log(`   Function: ${decoded.func.displayName()}`);
@@ -132,7 +162,10 @@ eth.getBlockNumber((error, blockNumber) => {
     let anchorBlockNumber = options.anchor || blockNumber;
     let blockOffset = options.offset;
     let deepBlock = anchorBlockNumber - blockOffset > 0 ? anchorBlockNumber - blockOffset : 1;
-    console.log(`Last block ${anchorBlockNumber}. Diving to ${deepBlock}.`);
+    console.log(`Access URL: ${gethUrl}`);
+    console.log(`Anchor block ${anchorBlockNumber}. Diving to ${deepBlock}.\n`);
+    if (gethUrl.startsWith('http') && blockOffset > 1000)
+        console.log(`We recommend you to use IPC instead of HTTP for a higher performance!`.yellow);
 
     let processBlock = function (block) {
         let transactions = block.transactions;

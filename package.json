@@ -23,7 +23,6 @@
     "command-line-usage": "^4.0.0",
     "ethereumjs-tx": "1.1.4",
     "ethereumjs-util": "4.5.0",
-    "streamifier": "0.1.1",
     "web3": "0.18.4"
   }
 }
