@@ -35,7 +35,7 @@ if(options.version) {
 if (options.help) {
     console.log(getUsage([
         {
-            content: require('./src/ansi-header'),
+            content: require('./src/ansi-header').red,
             raw: true
         },
         {
