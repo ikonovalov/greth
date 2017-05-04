@@ -28,7 +28,7 @@ const optionDefinitions = [
     {name: 'abi', type: String, alias: 'i'},
     {name: 'geth', type: String, defaultValue: 'http://localhost:8545', alias: 'g'},
     {name: 'anchor', type: Number},
-    {name: 'offset', type: Number, defaultValue: 100},
+    {name: 'offset', type: Number, defaultValue: 2000},
     {name: 'help', alias: 'h', type: Boolean}
 ];
 const options = commandLineArgs(optionDefinitions);
@@ -52,7 +52,7 @@ let functions = abi
 
 let Table = require('cli-table');
 let funcTable = new Table({
-    head: ["Functions", "SHA3(signature)"],
+    head: ["Functions", "SHA3(signature)", "Input arguments"],
     style: {
         head: ['green'],
         border: ['grey'],
@@ -62,7 +62,10 @@ let funcTable = new Table({
 
 let funcMap = new Map();
 functions.forEach(sfunc => {
-    funcTable.push([sfunc.displayName(), sfunc.signature()]);
+    let displayName = sfunc.displayName();
+    let sha3Signature = sfunc.signature();
+    let inputTypes = sfunc.typeName();
+    funcTable.push([displayName, sha3Signature, inputTypes.length > 0 ? inputTypes : "-"]);
     funcMap.set(sfunc.signature(), sfunc);
 });
 
@@ -83,13 +86,19 @@ let decodeTxInput = function (tx) {
     };
 };
 
+let finalize = function () {
+    console.log("\u262D Done.".bold.green);
+    process.exit();
+};
+
 let consolePrint = function (decoded) {
-    console.log(`Block: ${decoded.tx.blockNumber}`)
-    console.log(`   Tx: ${decoded.tx.hash}`)
-    console.log(`   Function: ${decoded.func.displayName()}`)
+    console.log(`Block: ${decoded.tx.blockNumber}`);
+    console.log(`   Tx: ${decoded.tx.hash}`);
+    console.log(`   From: ${decoded.tx.from}`);
+    console.log(`   Function: ${decoded.func.displayName()}`);
     console.log(`   Params [${decoded.func.typeName()}] {`);
     decoded.params.forEach(p => {
-        console.log(`       ${p}`);
+        console.log(`       ${p.toString(16)}`);
     });
     console.log(`   }`);
 };
@@ -105,7 +114,7 @@ eth.getBlockNumber((error, blockNumber) => {
 
     let anchorBlockNumber = options.anchor || blockNumber;
     let blockOffset = options.offset;
-    let deepBlock = anchorBlockNumber - blockOffset;
+    let deepBlock = anchorBlockNumber - blockOffset > 0 ? anchorBlockNumber - blockOffset : 1;
     console.log(`Last block ${anchorBlockNumber}. Diving to ${deepBlock}.`);
 
     let processBlock = function (block) {
@@ -134,8 +143,8 @@ eth.getBlockNumber((error, blockNumber) => {
                     }
                 });
             }
-            if (blockNumber == anchorBlockNumber) {
-                console.log("Done")
+            if (blockNumber === anchorBlockNumber) {
+                finalize();
             } else {
                 setTimeout(explore, 0, blockNumber + 1)
             }
