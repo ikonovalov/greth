@@ -1,6 +1,6 @@
 {
   "name": "true-story-bro",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Scan ethereum's contract activity",
   "author": "Igor Konovalov",
   "main": "index.js",
