@@ -70,7 +70,7 @@ Done ☭
 ```
 2) Same as above, but with HTTP access and specific an anchor block (10000). So we will scan 8000-10000 blocks.
 ```bash
-$ ./bin/bro  --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json  anchor 10000--offset 2000
+$ ./bin/bro  --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json --anchor 10000 --offset 2000
 ┌──────────────────────┬─────────────────┬─────────────────────────────────────────────────┐
 │ Functions            │ SHA3(signature) │ Input arguments                                 │
 ├──────────────────────┼─────────────────┼─────────────────────────────────────────────────┤
