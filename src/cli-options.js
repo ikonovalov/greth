@@ -63,6 +63,14 @@ module.exports = [
         description: 'True Story version.'
     },
     {
+        name: 'verbosity',
+        type: Number,
+        defaultValue: 1,
+        alias: 'L',
+        typeLabel: '[underline]{1..3}',
+        description: 'Verbosity level [1-3]. 1 - Low, 2 - Medium, 3 - High'
+    },
+    {
         name: 'help',
         alias: 'h',
         type: Boolean,

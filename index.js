@@ -52,6 +52,12 @@ if (options.help) {
 
 const address = options.addr;
 const gethUrl = options.geth;
+const verb = {
+    level: options.verbosity,
+    low: 1,
+    medium: 2,
+    high: 3
+};
 
 // upload contract abi
 const abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
@@ -94,14 +100,12 @@ functions.forEach(sfunc => {
 console.log(funcTable.toString());
 
 // functions
-let decodeTxInput = function (tx) {
-    let inputData = tx.input;
+let decodeTxInput = function (inputData) {
     let inputSignature = inputData.substr(2, 8);
     let calledFunction = funcMap.get(inputSignature);
     let inputEncodedParams = inputData.slice(10);
     let inputDecodedParams = SolidityCoder.decodeParams(calledFunction._inputTypes, inputEncodedParams);
     return {
-        tx: tx,
         func: calledFunction,
         signature: inputSignature,
         params: inputDecodedParams
@@ -133,12 +137,16 @@ let toStr = function (value) {
  */
 let consolePrint = function (decoded) {
     console.log();
-    console.log(`Block: ${decoded.tx.blockNumber}`.bold);
+    let blockMessage = decoded.block.number;
+    if (verb.level > verb.low) {
+        blockMessage += `\t BlkTime: ${new Date(decoded.block.timestamp * 1000).toUTCString()} \t Miner: ${decoded.block.miner}`;
+    }
+    console.log(`Block: ${blockMessage}`.bold);
     console.log(`   Tx: ${decoded.tx.hash}`);
     console.log(`   From: ${decoded.tx.from}`);
-    console.log(`   Function: ${decoded.func.displayName()}`);
-    console.log(`   Params [${decoded.func.typeName()}] {`);
-    let params = decoded.params;
+    console.log(`   Function: ${decoded.call.func.displayName()}`);
+    console.log(`   Params [${decoded.call.func.typeName()}] {`);
+    let params = decoded.call.params;
     params.forEach((p, idx) => {
         if (Array.isArray(p)) { // like uint256[]
             let reduced = p.reduce((prev, curr) => toStr(prev) + ", " + toStr(curr));
@@ -172,8 +180,16 @@ eth.getBlockNumber((error, blockNumber) => {
         for (let i = 0; i < transactions.length; i++) {
             let tx = transactions[i];
             if (tx.to === address) {
-                let decodedInput = decodeTxInput(tx);
-                outputFunction(decodedInput);
+                let decodedInput = decodeTxInput(tx.input);
+                outputFunction({
+                    block: { // compact block presentation
+                        number: block.number,
+                        timestamp: block.timestamp,
+                        miner: block.miner
+                    },
+                    tx: tx,
+                    call: decodedInput
+                });
             }
         }
     };
