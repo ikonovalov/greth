@@ -22,7 +22,6 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const commandLineArgs = require('command-line-args');
 const getUsage = require('command-line-usage');
-const BigNumber = require('bignumber.js');
 
 const optionDefinitions = require('./src/cli-options');
 const options = commandLineArgs(optionDefinitions);
@@ -71,35 +70,20 @@ if (gethUrl.startsWith('http')) {
     // for instance: /mnt/u110/ethereum/pnet1/geth.ipc
     web3.setProvider(new Web3.providers.IpcProvider(gethUrl, require('net')));
 }
-const eth = web3.eth;
 
-// prepare functions
+let eth = web3.eth;
+
+// prepare solidity functions
 let functions = abi
-    .filter(e => e.type == 'function')
+    .filter(e => e.type === 'function')
     .map(fd => new SolidityFunction(eth, fd, address));
 
-let Table = require('cli-table');
-let funcTable = new Table({
-    head: ["Functions", "SHA3(signature)", "Input arguments"],
-    style: {
-        head: ['green'],
-        border: ['grey'],
-        compact: true
-    }
-});
-
 let funcMap = new Map();
-functions.forEach(sfunc => {
-    let displayName = sfunc.displayName();
-    let sha3Signature = sfunc.signature();
-    let inputTypes = sfunc.typeName();
-    funcTable.push([displayName, sha3Signature, inputTypes.length > 0 ? inputTypes : "-"]);
-    funcMap.set(sfunc.signature(), sfunc);
+functions.forEach(solFunc => {
+    funcMap.set(solFunc.signature(), solFunc);
 });
 
-console.log(funcTable.toString());
 
-// functions
 let decodeTxInput = function (inputData) {
     let inputSignature = inputData.substr(2, 8);
     let calledFunction = funcMap.get(inputSignature);
@@ -112,61 +96,21 @@ let decodeTxInput = function (inputData) {
     };
 };
 
-let finalize = function () {
-    console.log("\nDone \u262D".bold.green);
-    process.exit();
-};
+// setup output options
+let outputs = require('./src/output');
+let outputFunction = outputs[options.output];
+if (options.output === 'console') {
+    outputs.printFunctionTable(functions);
+}
 
-let toStr = function (value) {
-    if (value.constructor === String)
-        return value;
-    if (value.constructor === BigNumber)
-        return `0x${value.toString(16)}`;
-    else
-        return value.toString();
-
-};
-
-/*
- * @param decoded => {
- *       tx: tx,
- *       func: calledFunction,
- *       signature: inputSignature,
- *       params: inputDecodedParams
- *   }
- */
-let consolePrint = function (decoded) {
-    console.log();
-    let blockMessage = decoded.block.number;
-    if (verb.level > verb.low) {
-        blockMessage += `\t BlkTime: ${new Date(decoded.block.timestamp * 1000).toUTCString()} \t Miner: ${decoded.block.miner}`;
-    }
-    console.log(`Block: ${blockMessage}`.bold);
-    console.log(`   Tx: ${decoded.tx.hash}`);
-    console.log(`   From: ${decoded.tx.from}`);
-    console.log(`   Function: ${decoded.call.func.displayName()}`);
-    console.log(`   Params [${decoded.call.func.typeName()}] {`);
-    let params = decoded.call.params;
-    params.forEach((p, idx) => {
-        if (Array.isArray(p)) { // like uint256[]
-            let reduced = p.reduce((prev, curr) => toStr(prev) + ", " + toStr(curr));
-            console.log(`       #${idx}: [${reduced}]`);
-        }
-        else
-            console.log(`       #${idx}: ${toStr(p)}`);
-    });
-    console.log(`   }`);
-};
-
-let outputFunction = consolePrint;
-
-// prepare scan transactions
+// determinate highest block
 eth.getBlockNumber((error, blockNumber) => {
     if (error) {
         console.error(error);
         return;
     }
 
+    // setup block range
     let anchorBlockNumber = options.anchor || blockNumber;
     let blockOffset = options.offset;
     let deepBlock = anchorBlockNumber - blockOffset > 0 ? anchorBlockNumber - blockOffset : 1;
@@ -189,7 +133,7 @@ eth.getBlockNumber((error, blockNumber) => {
                     },
                     tx: tx,
                     call: decodedInput
-                });
+                }, verb);
             }
         }
     };
@@ -210,7 +154,8 @@ eth.getBlockNumber((error, blockNumber) => {
                 });
             }
             if (blockNumber === anchorBlockNumber) {
-                finalize();
+                console.log("\nDone \u262D".bold.green);
+                process.exit();
             } else {
                 setTimeout(explore, 0, blockNumber + 1)
             }

@@ -57,6 +57,13 @@ module.exports = [
         description: 'Scan N blocks in depth from an [bold]{anchor}. Default value is 2000.'
     },
     {
+        name: 'output',
+        type: String,
+        defaultValue: 'console',
+        typeLabel: '[underline]{console}',
+        description: 'Output format. Default is a console.'
+    },
+    {
         name: 'version',
         alias: 'v',
         type: Boolean,
