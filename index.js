@@ -16,15 +16,17 @@
  */
 
 "use strict";
-require('colors');
-const fs = require('fs');
-const Web3 = require('web3');
-const web3 = new Web3();
-const commandLineArgs = require('command-line-args');
-const getUsage = require('command-line-usage');
 
-const optionDefinitions = require('./src/cli-options');
-const options = commandLineArgs(optionDefinitions);
+require('colors');
+
+const fs = require('fs'),
+    Web3 = require('web3'),
+    web3 = new Web3(),
+    commandLineArgs = require('command-line-args'),
+    getUsage = require('command-line-usage');
+
+const optionDefinitions = require('./src/cli-options'),
+    options = commandLineArgs(optionDefinitions);
 
 if(options.version) {
     console.log(require('./package.json').version);
@@ -165,5 +167,3 @@ eth.getBlockNumber((error, blockNumber) => {
     // iterate on blocks
     explore(deepBlock);
 });
-
-
