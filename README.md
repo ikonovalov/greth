@@ -1,4 +1,4 @@
-# True story, bro
+# Greth (grep & eth)
 Ethereum's contract history
 
 ## Installation
@@ -7,7 +7,7 @@ Ethereum's contract history
 npm install https://github.com/ikonovalov/greth
 ```
 
-## Run bro
+## Run greth
 ### Help
 ```bash
 $./bin/greth --help
