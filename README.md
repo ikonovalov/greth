@@ -4,13 +4,13 @@ Ethereum's contract history
 ## Installation
 
 ```bash    
-npm install https://github.com/ikonovalov/true-story-bro
+npm install https://github.com/ikonovalov/greth
 ```
 
 ## Run bro
 ### Help
 ```bash
-$./bin/bro --help
+$./bin/greth --help
 Options
 
   -a, --addr address_hex            Contract address.                                                             
@@ -26,7 +26,7 @@ Options
 1) IPC access to a contract at 0x5abfa91dfe37f02f84933cb7ec23658072c7032f from the latest block to 2000 blocks deeper.
 ```bash
 $ cd <BRO_HOME>
-$ ./bin/bro --geth /mnt/u110/ethereum/pnet1/geth.ipc --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json  --offset 2000
+$ ./bin/greth --geth /mnt/u110/ethereum/pnet1/geth.ipc --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json  --offset 2000
 ┌──────────────────────┬─────────────────┬─────────────────────────────────────────────────┐
 │ Functions            │ SHA3(signature) │ Input arguments                                 │
 ├──────────────────────┼─────────────────┼─────────────────────────────────────────────────┤
@@ -70,7 +70,7 @@ Done ☭
 ```
 2) Same as above, but with HTTP access and specific an anchor block (10000). So we will scan 8000-10000 blocks.
 ```bash
-$ ./bin/bro  --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json --anchor 10000 --offset 2000
+$ ./bin/greth  --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json --anchor 10000 --offset 2000
 ┌──────────────────────┬─────────────────┬─────────────────────────────────────────────────┐
 │ Functions            │ SHA3(signature) │ Input arguments                                 │
 ├──────────────────────┼─────────────────┼─────────────────────────────────────────────────┤
