@@ -93,7 +93,8 @@ let outputFunction = outputs[options.output];
 
 // trace blockchain
 let blockOffset = options.offset;
-greth.abi(abi).at(address).trace(blockOffset);
+let anchorBlock = options.anchor;
+greth.abi(abi).at(address).trace(blockOffset, anchorBlock);
 
 greth.on('trace-start', context => {
     if (verb.level >= verb.medium) {
