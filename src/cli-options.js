@@ -75,7 +75,7 @@ module.exports = [
         defaultValue: 1,
         alias: 'L',
         typeLabel: '[underline]{1..3}',
-        description: 'Verbosity level [1-3]. 1 - Low, 2 - Medium, 3 - High'
+        description: 'Verbosity level [1-3]. 1 - Low, 2 - Medium, 3 - High. Default is Low(1)'
     },
     {
         name: 'help',

@@ -25,7 +25,7 @@ Options
 ### Example
 1) IPC access to a contract at 0x5abfa91dfe37f02f84933cb7ec23658072c7032f from the latest block to 2000 blocks deeper.
 ```bash
-$ cd <BRO_HOME>
+$ cd <GRETH_HOME>
 $ ./bin/greth --geth /mnt/u110/ethereum/pnet1/geth.ipc --addr 0x5abfa91dfe37f02f84933cb7ec23658072c7032f --abi /tmp/factory.json  --offset 2000
 ┌──────────────────────┬─────────────────┬─────────────────────────────────────────────────┐
 │ Functions            │ SHA3(signature) │ Input arguments                                 │

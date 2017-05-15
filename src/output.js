@@ -44,8 +44,8 @@ module.exports = {
         console.log();
         let blockMessage = decoded.block.number;
 
-        console.log(`Block: ${blockMessage}`.bold);
-        console.log(`   Tx: ${decoded.tx.hash}`);
+        console.log(`Tx: ${decoded.tx.hash}`.bold);
+        console.log(`   Block: ${blockMessage}`);
         if (verbosity.level > verbosity.low) {
             console.log(`   Time: \t${new Date(decoded.block.timestamp * 1000).toUTCString()}`);
             console.log(`   Miner: \t${decoded.block.miner}`);
