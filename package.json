@@ -1,19 +1,19 @@
 {
-  "name": "true-story-bro",
+  "name": "greth",
   "version": "0.1.0",
   "description": "Scan ethereum's contract activity",
   "author": "Igor Konovalov",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:ikonovalov/true-story-bro.git"
+    "url": "git@github.com:ikonovalov/greth.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bin/bro --help"
+    "start": "node bin/greth --help"
   },
   "bin": {
-    "bro": "./bin/bro"
+    "greth": "./bin/greth"
   },
   "license": "Apache-2.0",
   "dependencies": {

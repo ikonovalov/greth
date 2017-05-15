@@ -16,25 +16,31 @@
  */
 
 "use strict";
+
 require('colors');
-const fs = require('fs');
-const Web3 = require('web3');
-const web3 = new Web3();
-const commandLineArgs = require('command-line-args');
-const getUsage = require('command-line-usage');
 
-const optionDefinitions = require('./src/cli-options');
-const options = commandLineArgs(optionDefinitions);
+const
+    fs = require('fs'),
+    Web3 = require('web3'),
+    web3 = new Web3(),
+    commandLineArgs = require('command-line-args'),
+    getUsage = require('command-line-usage');
 
+const
+    optionDefinitions = require('./src/cli-options'),
+    options = commandLineArgs(optionDefinitions);
+
+// print version only
 if(options.version) {
     console.log(require('./package.json').version);
     process.exit(0);
 }
 
+// print help only
 if (options.help) {
     console.log(getUsage([
         {
-            content: require('./src/ansi-header').red,
+            content: require('./src/ansi-header').green,
             raw: true
         },
         {
@@ -60,10 +66,8 @@ const verb = {
 
 // upload contract abi
 const abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
-const SolidityFunction = require('web3/lib/web3/function');
-const SolidityCoder = require('web3/lib/solidity/coder');
 
-// initialize web3
+// setup web3 RPC provider
 if (gethUrl.startsWith('http')) {
     web3.setProvider(new Web3.providers.HttpProvider(gethUrl));
 } else {
@@ -71,99 +75,35 @@ if (gethUrl.startsWith('http')) {
     web3.setProvider(new Web3.providers.IpcProvider(gethUrl, require('net')));
 }
 
-let eth = web3.eth;
-
-// prepare solidity functions
-let functions = abi
-    .filter(e => e.type === 'function')
-    .map(fd => new SolidityFunction(eth, fd, address));
-
-let funcMap = new Map();
-functions.forEach(solFunc => {
-    funcMap.set(solFunc.signature(), solFunc);
-});
-
-
-let decodeTxInput = function (inputData) {
-    let inputSignature = inputData.substr(2, 8);
-    let calledFunction = funcMap.get(inputSignature);
-    let inputEncodedParams = inputData.slice(10);
-    let inputDecodedParams = SolidityCoder.decodeParams(calledFunction._inputTypes, inputEncodedParams);
-    return {
-        func: calledFunction,
-        signature: inputSignature,
-        params: inputDecodedParams
-    };
-};
+// Create GrEth
+let Greth = require('./src/greth');
+let greth = new Greth(web3, abi);
 
 // setup output options
 let outputs = require('./src/output');
 let outputFunction = outputs[options.output];
+
 if (options.output === 'console') {
-    outputs.printFunctionTable(functions);
+    if (verb.level > verb.medium) {
+        outputs.printFunctionTable(greth.solFunctions);
+    }
 }
 
-// determinate highest block
-eth.getBlockNumber((error, blockNumber) => {
-    if (error) {
-        console.error(error);
-        return;
-    }
+greth.contract(address).trace(3000);
 
-    // setup block range
-    let anchorBlockNumber = options.anchor || blockNumber;
-    let blockOffset = options.offset;
-    let deepBlock = anchorBlockNumber - blockOffset > 0 ? anchorBlockNumber - blockOffset : 1;
-    console.log(`Access URL: ${gethUrl}`);
-    console.log(`Anchor block ${anchorBlockNumber}. Diving to ${deepBlock}.\n`);
-    if (gethUrl.startsWith('http') && blockOffset > 1000)
-        console.log(`We recommend you to use IPC instead of HTTP for a higher performance!`.yellow);
-
-    let processBlock = function (block) {
-        let transactions = block.transactions;
-        for (let i = 0; i < transactions.length; i++) {
-            let tx = transactions[i];
-            if (tx.to === address) {
-                let decodedInput = decodeTxInput(tx.input);
-                outputFunction({
-                    block: { // compact block presentation
-                        number: block.number,
-                        timestamp: block.timestamp,
-                        miner: block.miner
-                    },
-                    tx: tx,
-                    call: decodedInput
-                }, verb);
-            }
-        }
-    };
-
-    let explore = function (blockNumber) {
-        eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
-            if (error) {
-                console.error(error);
-                return;
-            }
-            if (txCount > 0) {
-                eth.getBlock(blockNumber, true, (error, block) => {
-                    if (!error) {
-                        processBlock(block);
-                    } else {
-                        console.error(error)
-                    }
-                });
-            }
-            if (blockNumber === anchorBlockNumber) {
-                console.log("\nDone \u262D".bold.green);
-                process.exit();
-            } else {
-                setTimeout(explore, 0, blockNumber + 1)
-            }
-        });
-    };
-
-    // iterate on blocks
-    explore(deepBlock);
+greth.on('trace-start', context => {
+    console.log(`Anchor block ${context.endBlock}. Diving to ${context.startBlock}.`);
 });
 
+greth.on('trace-next-tx', (obj) => {
+    outputFunction(obj, verb)
+});
 
+greth.on('error', error => {
+    console.error(error)
+});
+
+greth.on('traverse-finish', () => {
+    console.log("\nDone \u262D".bold.green);
+    process.exit(0);
+});
