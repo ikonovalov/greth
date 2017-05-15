@@ -98,7 +98,7 @@ greth.abi(abi).at(address).trace(blockOffset, anchorBlock);
 
 greth.on('trace-start', context => {
     if (verb.level >= verb.medium) {
-        outputs.printFunctionTable(greth.solFunctions);
+        outputs.printFunctionTable(greth.contractFunctions);
         console.info(`Anchor block ${context.endBlock}. Diving to ${context.startBlock}.`);
     }
 });

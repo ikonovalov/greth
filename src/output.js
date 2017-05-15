@@ -45,14 +45,17 @@ module.exports = {
         let blockMessage = decoded.block.number;
 
         console.log(`Tx: ${decoded.tx.hash}`.bold);
-        console.log(`   Block: ${blockMessage}`);
+        console.log(`   Block: \t${blockMessage}`);
         if (verbosity.level > verbosity.low) {
             console.log(`   Time: \t${new Date(decoded.block.timestamp * 1000).toUTCString()}`);
             console.log(`   Miner: \t${decoded.block.miner}`);
         }
         console.log(`   From: \t${decoded.tx.from}`);
-        console.log(`   Function: \t${decoded.call.func.displayName()}`.bold);
-        console.log(`   Params \t[${decoded.call.func.typeName()}] {`);
+        let func = decoded.call.func;
+
+        console.log(`   Function: \t${func.sol.displayName()}`.bold);
+        console.log(`   Param types \t[${func.sol.typeName()}]`);
+        console.log(`   Param names \t[${func.fd.inputsNames}] {`);
         let params = decoded.call.params;
         params.forEach((p, idx) => {
             if (Array.isArray(p)) { // like uint256[]
@@ -69,7 +72,7 @@ module.exports = {
         let Table = require('cli-table');
 
         let funcTable = new Table({
-            head: ["Functions", "SHA3(signature)", "Input arguments"],
+            head: ["Functions", "SHA3(signature)", "Input types"],
             style: {
                 head: ['green'],
                 border: ['grey'],
@@ -77,10 +80,11 @@ module.exports = {
             }
         });
 
-        solidityFunctions.forEach(f => {
-            let displayName = f.displayName();
-            let sha3Signature = f.signature();
-            let inputTypes = f.typeName();
+        solidityFunctions.forEach(func => {
+            let sol = func.sol;
+            let displayName = sol.displayName();
+            let sha3Signature = sol.signature();
+            let inputTypes = sol.typeName();
             funcTable.push([displayName, sha3Signature, inputTypes.length > 0 ? inputTypes : "-"]);
 
         });

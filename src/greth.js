@@ -25,11 +25,12 @@ const
 
 let decodeTxInput = function (functionsMap, inputData) {
     let inputSignature = inputData.substr(2, 8);
-    let calledFunction = functionsMap.get(inputSignature);
+    let func = functionsMap.get(inputSignature);
+    let calledFunction = func.sol;
     let inputEncodedParams = inputData.slice(10);
     let inputDecodedParams = SolidityCoder.decodeParams(calledFunction._inputTypes, inputEncodedParams);
     return {
-        func: calledFunction,
+        func: func,
         signature: inputSignature,
         params: inputDecodedParams
     };
@@ -44,13 +45,20 @@ class Greth extends EventEmitter {
     }
     abi(abi) {
         this._abi = abi;
-        this._solFunctions = abi
+        this._functionsMap = new Map();
+        this._functions = abi
             .filter(e => e.type === 'function')
-            .map(fd => new SolidityFunction(this._web3.eth, fd));
+            .map(fd => {
+                fd.inputsNames = fd.inputs.map(i => i.name);
+                return {
+                    fd: fd,
+                    sol: new SolidityFunction(this._web3.eth, fd)
+                }
+            });
 
-        this._solFuncMap = new Map();
-        this._solFunctions.forEach(solFunc => {
-            this._solFuncMap.set(solFunc.signature(), solFunc);
+
+        this._functions.forEach(func => {
+            this._functionsMap.set(func.sol.signature(), func);
         });
         return this;
     }
@@ -66,13 +74,13 @@ class Greth extends EventEmitter {
         }
     }
 
-    get solFunctions() {
-        return this._solFunctions;
+    get contractFunctions() {
+        return this._functions;
     }
 
     _transcationsFor(address, blockOffset, anchorBlock) {
         let eth = this._web3.eth;
-        let solFuncMap = this._solFuncMap;
+        let solFuncMap = this._functionsMap;
 
         eth.getBlockNumber((error, topBlockNumber) => {
             if (error) {
