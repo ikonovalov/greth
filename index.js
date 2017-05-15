@@ -64,8 +64,13 @@ const verb = {
     high: 3
 };
 
-// upload contract abi
-const abi = JSON.parse(fs.readFileSync(options.abi, 'utf8'));
+// load contract abi
+let abiPath = options.abi;
+if (!fs.existsSync(abiPath)) {
+    console.error(`ABI file [${abiPath}] doesn't exists`.red);
+    process.exit(1);
+}
+const abi = JSON.parse(fs.readFileSync(abiPath, 'utf8'));
 
 // setup web3 RPC provider
 if (gethUrl.startsWith('http')) {
@@ -89,10 +94,12 @@ if (options.output === 'console') {
     }
 }
 
-greth.contract(address).trace(3000);
+// trace blockchain
+let blockOffset = 3000;
+greth.contract(address).trace(blockOffset);
 
 greth.on('trace-start', context => {
-    console.log(`Anchor block ${context.endBlock}. Diving to ${context.startBlock}.`);
+    console.info(`Anchor block ${context.endBlock}. Diving to ${context.startBlock}.`);
 });
 
 greth.on('trace-next-tx', (obj) => {
@@ -100,7 +107,8 @@ greth.on('trace-next-tx', (obj) => {
 });
 
 greth.on('error', error => {
-    console.error(error)
+    console.error(error.message.red);
+    process.exit(1);
 });
 
 greth.on('traverse-finish', () => {

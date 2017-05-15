@@ -1,6 +1,6 @@
 {
   "name": "greth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scan ethereum's contract activity",
   "author": "Igor Konovalov",
   "main": "index.js",
@@ -21,7 +21,6 @@
     "colors": "^1.1.2",
     "command-line-args": "^4.0.3",
     "command-line-usage": "^4.0.0",
-    "ethereumjs-tx": "1.1.4",
     "ethereumjs-util": "4.5.0",
     "web3": "0.18.4"
   }

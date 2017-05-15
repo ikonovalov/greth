@@ -41,7 +41,6 @@ let traceContract = (blockOffset, anchorBlock) => {
 
     eth.getBlockNumber((error, topBlockNumber) => {
         if (error) {
-            console.error(error);
             this.emit('error', error);
             return;
         }
@@ -50,7 +49,7 @@ let traceContract = (blockOffset, anchorBlock) => {
 
         let explore = (blockNumber) => eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
             if (error) {
-                console.error(error);
+                this.emit('error', error);
                 return;
             }
             if (txCount > 0) {
@@ -125,7 +124,6 @@ class Greth extends EventEmitter {
 
         eth.getBlockNumber((error, topBlockNumber) => {
             if (error) {
-                console.error(error);
                 this.emit('error', error);
                 return;
             }
