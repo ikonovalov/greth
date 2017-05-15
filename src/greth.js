@@ -37,24 +37,30 @@ let decodeTxInput = function (functionsMap, inputData) {
 
 class Greth extends EventEmitter {
 
-    constructor(web3, abi) {
+    constructor(web3) {
         super();
         this._web3 = web3;
-        if (abi) {
-            this._solFunctions = abi
-                .filter(e => e.type === 'function')
-                .map(fd => new SolidityFunction(this._web3.eth, fd));
 
-            this._solFuncMap = new Map();
-            this._solFunctions.forEach(solFunc => {
-                this._solFuncMap.set(solFunc.signature(), solFunc);
-            });
-        }
+    }
+    abi(abi) {
+        this._abi = abi;
+        this._solFunctions = abi
+            .filter(e => e.type === 'function')
+            .map(fd => new SolidityFunction(this._web3.eth, fd));
+
+        this._solFuncMap = new Map();
+        this._solFunctions.forEach(solFunc => {
+            this._solFuncMap.set(solFunc.signature(), solFunc);
+        });
+        return this;
     }
 
-    contract(address) {
+    at(address) {
+        if (!this._abi) {
+            throw new Error('ABI is not specified');
+        }
         return {
-            trace : (blockOffset, anchorBlock) => {
+            trace: (blockOffset, anchorBlock) => {
                 this._transcationsFor(address, blockOffset, anchorBlock)
             }
         }
@@ -65,10 +71,6 @@ class Greth extends EventEmitter {
     }
 
     _transcationsFor(address, blockOffset, anchorBlock) {
-        if (!this.abi) {
-            this.emit('error', new Error('ABI is not specified'));
-            return;
-        }
         let eth = this._web3.eth;
         let solFuncMap = this._solFuncMap;
 

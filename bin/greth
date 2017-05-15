@@ -91,18 +91,13 @@ let greth = new Greth(web3, abi);
 let outputs = require('../src/output');
 let outputFunction = outputs[options.output];
 
-if (options.output === 'console') {
-    if (verb.level >= verb.medium) {
-        outputs.printFunctionTable(greth.solFunctions);
-    }
-}
-
 // trace blockchain
 let blockOffset = options.offset;
-greth.contract(address).trace(blockOffset);
+greth.abi(abi).at(address).trace(blockOffset);
 
 greth.on('trace-start', context => {
     if (verb.level >= verb.medium) {
+        outputs.printFunctionTable(greth.solFunctions);
         console.info(`Anchor block ${context.endBlock}. Diving to ${context.startBlock}.`);
     }
 });
