@@ -28,10 +28,6 @@ const
     optionDefinitions = require('../src/cli-options'),
     options = commandLineArgs(optionDefinitions);
 
-if (!options.addr || !options.abi) {
-    console.error('Address and ABI is mandatory!'.red + ' Use --help for more information.');
-    process.exit(1);
-}
 // print version only
 if(options.version) {
     console.log(require('../package.json').version);
@@ -42,7 +38,7 @@ if(options.version) {
 if (options.help) {
     console.log(getUsage([
         {
-            content: require('../src/ansi-header').green,
+            content: require('../src/ansi-header').dim.red,
             raw: true
         },
         {
@@ -55,6 +51,11 @@ if (options.help) {
         }
     ]));
     process.exit(0);
+}
+
+if (!options.addr || !options.abi) {
+    console.error('Address and ABI is mandatory!'.red + ' Use --help for more information.');
+    process.exit(1);
 }
 
 const address = options.addr;
