@@ -21,7 +21,7 @@
     "colors": "^1.1.2",
     "command-line-args": "^4.0.3",
     "command-line-usage": "^4.0.0",
-    "ethereumjs-util": "4.5.0",
+    "ethereumjs-util": "^5.1.1",
     "web3": "0.18.4"
   }
 }
