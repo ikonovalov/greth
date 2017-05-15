@@ -49,7 +49,7 @@ class Greth extends EventEmitter {
         this._functions = abi
             .filter(e => e.type === 'function')
             .map(fd => {
-                fd.inputsNames = fd.inputs.map(i => i.name);
+                fd.inputsNames = fd.inputs ? fd.inputs.map(i => i.name) : [];
                 return {
                     fd: fd,
                     sol: new SolidityFunction(this._web3.eth, fd)
