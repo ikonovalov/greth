@@ -35,60 +35,6 @@ let decodeTxInput = function (functionsMap, inputData) {
     };
 };
 
-let traceContract = (blockOffset, anchorBlock) => {
-    let eth = this._web3.eth;
-    let solFuncMap = this._solFuncMap;
-
-    eth.getBlockNumber((error, topBlockNumber) => {
-        if (error) {
-            this.emit('error', error);
-            return;
-        }
-
-        let endBlockNumber = (anchorBlock | topBlockNumber);
-
-        let explore = (blockNumber) => eth.getBlockTransactionCount(blockNumber, (error, txCount) => {
-            if (error) {
-                this.emit('error', error);
-                return;
-            }
-            if (txCount > 0) {
-                eth.getBlock(blockNumber, true, (error, block) => {
-                    if (!error) {
-                        let transactions = block.transactions;
-                        for (let i = 0; i < transactions.length; i++) {
-                            let tx = transactions[i];
-                            if (tx.to === address) {
-                                let decodedInput = decodeTxInput(solFuncMap, tx.input);
-                                this.emit('next-tx',
-                                    {
-                                        block: { // compact block presentation
-                                            number: block.number,
-                                            timestamp: block.timestamp,
-                                            miner: block.miner
-                                        },
-                                        tx: tx,
-                                        call: decodedInput
-                                    }
-                                );
-                            }
-                        }
-                    } else {
-                        this.emit('error', error)
-                    }
-                });
-            }
-            if (blockNumber === endBlockNumber) {
-                this.emit('traverse-finish')
-            } else {
-                setTimeout(explore, 0, blockNumber + 1)
-            }
-        });
-
-        explore((anchorBlock | topBlockNumber) - (blockOffset | 1000));
-    })
-};
-
 class Greth extends EventEmitter {
 
     constructor(web3, abi) {
@@ -119,6 +65,10 @@ class Greth extends EventEmitter {
     }
 
     _transcationsFor(address, blockOffset, anchorBlock) {
+        if (!this.abi) {
+            this.emit('error', new Error('ABI is not specified'));
+            return;
+        }
         let eth = this._web3.eth;
         let solFuncMap = this._solFuncMap;
 
@@ -128,8 +78,8 @@ class Greth extends EventEmitter {
                 return;
             }
 
-            let endBlockNumber = (anchorBlock | topBlockNumber);
-            let startBlockNumber = endBlockNumber - (blockOffset | 1000);
+            let endBlockNumber = anchorBlock || topBlockNumber;
+            let startBlockNumber = endBlockNumber - (blockOffset || 1000);
 
 
             this.emit('trace-start', {
@@ -173,7 +123,7 @@ class Greth extends EventEmitter {
                     });
                 }
                 if (blockNumber === endBlockNumber) {
-                    this.emit('traverse-finish')
+                    this.emit('trace-finish')
                 } else {
                     setTimeout(explore, 0, blockNumber + 1)
                 }

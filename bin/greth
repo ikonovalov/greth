@@ -98,7 +98,7 @@ if (options.output === 'console') {
 }
 
 // trace blockchain
-let blockOffset = 3000;
+let blockOffset = options.offset;
 greth.contract(address).trace(blockOffset);
 
 greth.on('trace-start', context => {
@@ -116,7 +116,7 @@ greth.on('error', error => {
     process.exit(1);
 });
 
-greth.on('traverse-finish', () => {
+greth.on('trace-finish', () => {
     if (verb.level >= verb.medium) {
         console.log("\nDone ".magenta + "\u262D".bold.red);
     }

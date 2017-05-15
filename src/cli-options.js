@@ -18,6 +18,10 @@
 /**
  * Created by ikonovalov on 05/05/17.
  */
+const defaultOffset = 2000;
+const defaultOutputMethod = 'console';
+const defaultVerbosityLevel = 1;
+
 module.exports = [
     {
         name: 'addr',
@@ -51,17 +55,17 @@ module.exports = [
     {
         name: 'offset',
         type: Number,
-        defaultValue: 2000,
+        defaultValue: defaultOffset,
         alias: 'o',
         typeLabel: '[underline]{in_blocks}',
-        description: 'Scan N blocks in depth from an [bold]{anchor}. Default value is 2000.'
+        description: `Scan N blocks in depth from an [bold]{anchor}. Default value is ${defaultOffset}.`
     },
     {
         name: 'output',
         type: String,
-        defaultValue: 'console',
+        defaultValue: defaultOutputMethod,
         typeLabel: '[underline]{console}',
-        description: 'Output format. Default is a console.'
+        description: `Output format. Default is a ${defaultOutputMethod}.`
     },
     {
         name: 'version',
@@ -72,10 +76,10 @@ module.exports = [
     {
         name: 'verbosity',
         type: Number,
-        defaultValue: 1,
+        defaultValue: defaultVerbosityLevel,
         alias: 'L',
         typeLabel: '[underline]{1..3}',
-        description: 'Verbosity level [1-3]. 1 - Low, 2 - Medium, 3 - High. Default is Low(1)'
+        description: `Verbosity level [1-3]. 1 - Low, 2 - Medium, 3 - High. Default is ${defaultVerbosityLevel}.`
     },
     {
         name: 'help',
