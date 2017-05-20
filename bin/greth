@@ -85,7 +85,7 @@ if (gethUrl.startsWith('http')) {
 
 // Create GrEth
 let Greth = require('../src/greth');
-let greth = new Greth(web3, abi);
+let greth = new Greth(web3);
 
 // setup output options
 let outputs = require('../src/output');
