@@ -90,6 +90,8 @@ class Greth extends EventEmitter {
 
             let endBlockNumber = anchorBlock || topBlockNumber;
             let startBlockNumber = endBlockNumber - (blockOffset || 1000);
+            if (startBlockNumber < 0)
+                startBlockNumber = 1;
 
 
             this.emit('trace-start', {
@@ -126,6 +128,9 @@ class Greth extends EventEmitter {
                 if (txCount > 0) {
                     eth.getBlock(blockNumber, true, (error, block) => {
                         if (!error) {
+                            if (blockNumber % 1000) { // just for a progress
+                                this.emit('trace-pass-1000s', blockNumber);
+                            }
                             processBlock(block)
                         } else {
                             this.emit('error', error)
