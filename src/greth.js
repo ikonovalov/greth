@@ -128,7 +128,7 @@ class Greth extends EventEmitter {
                 if (txCount > 0) {
                     eth.getBlock(blockNumber, true, (error, block) => {
                         if (!error) {
-                            if (blockNumber % 1000) { // just for a progress
+                            if (blockNumber % 1000 === 0) { // just for a progress
                                 this.emit('trace-pass-1000s', blockNumber);
                             }
                             processBlock(block)
